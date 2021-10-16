@@ -16,8 +16,6 @@ fi
 # Internal variables
 CLEAN=0
 BUILD_DEPS=0
-BUILD_GUEST=0
-BUILD_HOST=0
 
 # Platform-specific checking
 KERNEL_NAME=$(uname -s)
@@ -46,18 +44,8 @@ while [[ $# -gt 0 ]]; do
             BUILD_DEPS=1
             shift
         ;;
-        --guest)
-            BUILD_GUEST=1
-            BUILD_HOST=0
-            shift
-        ;;
-        --host)
-            BUILD_GUEST=0
-            BUILD_HOST=1
-            shift
-        ;;
         *)
-            echo "usage: $0 [-d|--deps] [-c|--clean] [--guest|--host]"
+            echo "usage: $0 [-d|--deps] [-c|--clean]"
             exit 1
         ;;
     esac
@@ -120,13 +108,6 @@ function build_project_guest {
     build_cmake $1
 }
 
-function build_project_host {
-    echo "Building project for host"
-    cd $SRC_PATH
-    cd src/host
-    build_cmake $1
-}
-
 # Install Linux distro-provided dependencies
 if [ "$KERNEL_NAME" == "Linux" ]; then
     if [ -f /usr/bin/apt ] && [ -f /usr/bin/sudo ]; then
@@ -138,17 +119,8 @@ fi
 
 # Build direct dependencies if requested
 if [ "$BUILD_DEPS" == "1" ]; then
-    # Build direct dependencies
-    if [ "$BUILD_GUEST" == "1" ]; then
-        build_3rdparty_cmake mir
-    elif [ "$BUILD_HOST" == "1" ]; then
-        build_3rdparty_cmake SDL
-    fi
+    build_3rdparty_cmake mir
 fi
 
-# Build main sources for either the guest or the host system
-if [ "$BUILD_GUEST" == "1" ]; then
-    build_project_guest
-elif [ "$BUILD_HOST" == "1" ]; then
-    build_project_host
-fi
+# Build the main sources
+build_project_guest
